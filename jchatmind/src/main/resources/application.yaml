@@ -1,13 +1,24 @@
 spring:
   application:
     name: jchatmind
-
   datasource:
     url: jdbc:postgresql://localhost:5432/jchatmind
     username: postgres
     password: your-db-password-here
     driver-class-name: org.postgresql.Driver
-
+  ai:
+    deepseek:
+      api-key: your-api-key
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
+    zhipuai:
+      api-key: your-api-key
+      base-url: https://open.bigmodel.cn/api/paas
+      chat:
+        options:
+          model: glm-4.6
 mybatis:
   type-aliases-package: com.kama.jchatmind.model.entity
   mapper-locations: classpath:mapper/*.xml
