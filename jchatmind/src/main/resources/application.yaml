@@ -6,6 +6,19 @@ spring:
     username: postgres
     password: your-db-password-here
     driver-class-name: org.postgresql.Driver
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: your-email
+    password: your-password # 邮箱授权码
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
   ai:
     deepseek:
       api-key: your-api-key
@@ -24,7 +37,6 @@ mybatis:
   mapper-locations: classpath:mapper/*.xml
   type-handlers-package: com.kama.jchatmind.typehandler
 
-# 文档存储配置
 document:
   storage:
     base-path: ./data/documents
