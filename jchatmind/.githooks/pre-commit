@@ -1,0 +1,66 @@
+#!/bin/sh
+# ============================================
+# JChatMind Pre-commit Hook
+# 代码提交前自动执行质量检查
+# ============================================
+
+echo "=========================================="
+echo " Running pre-commit quality checks..."
+echo "=========================================="
+
+# 获取项目根目录
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# 1. 运行单元测试
+echo ""
+echo "[1/2] Running unit tests..."
+cd "$PROJECT_DIR/jchatmind"
+
+# 使用 Maven Wrapper（如果存在），否则使用系统 mvn
+if [ -f "./mvnw" ]; then
+    ./mvnw test -q --no-transfer-progress 2>&1
+else
+    mvn test -q --no-transfer-progress 2>&1
+fi
+
+TEST_RESULT=$?
+
+if [ $TEST_RESULT -ne 0 ]; then
+    echo ""
+    echo "============================================"
+    echo " COMMIT REJECTED: Unit tests failed!"
+    echo " Please fix failing tests before committing."
+    echo "============================================"
+    exit 1
+fi
+
+echo " Unit tests passed."
+
+# 2. 检查是否有编译错误
+echo ""
+echo "[2/2] Checking compilation..."
+if [ -f "./mvnw" ]; then
+    ./mvnw compile -q --no-transfer-progress 2>&1
+else
+    mvn compile -q --no-transfer-progress 2>&1
+fi
+
+COMPILE_RESULT=$?
+
+if [ $COMPILE_RESULT -ne 0 ]; then
+    echo ""
+    echo "============================================"
+    echo " COMMIT REJECTED: Compilation failed!"
+    echo " Please fix compilation errors before committing."
+    echo "============================================"
+    exit 1
+fi
+
+echo " Compilation check passed."
+
+echo ""
+echo "=========================================="
+echo " All pre-commit checks passed!"
+echo "=========================================="
+exit 0

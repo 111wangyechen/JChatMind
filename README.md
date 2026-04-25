@@ -28,6 +28,33 @@ JChatMind 是一个智能 AI Agent 系统，基于 Spring AI 框架构建，实�
 
 JChatMind 通过分层架构 + Agent 核心服务，把 AI 能力（模型、RAG、工具）抽象成可组合、可扩展的系统模块。
 
+## Harness Engineering 智能体增强架构
+
+项目实现了完整的 Harness Engineering 六层架构，增强 Agent 的可靠性、可观测性和自我纠错能力：
+
+| 层级 | 名称 | 核心能力 |
+|------|------|----------|
+| L1 | 信息边界层 | Token 预算管控，上下文窗口自动压缩（40%/70%/90% 三级阈值） |
+| L2 | 工具系统层 | 工具调用前校验与冲突检测，工具结果智能提炼 |
+| L3 | 执行编排层 | LLM 驱动的多步任务规划，步骤追踪与进度管理 |
+| L4 | 记忆与状态层 | 长对话 LLM 摘要压缩，结构化任务状态管理与回滚 |
+| L5 | 评估与观测层 | 输出自验证与纠错循环，全链路执行指标采集 |
+| L6 | 约束校验与恢复层 | 安全护栏（注入检测），指数退避重试，错误恢复与降级 |
+
+**核心理念**：`Agent = Model + Harness`，通过 HarnessEngine 中央协调器在 Think-Execute 循环的每个关键节点提供增强，所有 Harness 调用采用 try-catch 降级设计，确保主流程不受影响。
+
+```
+agent/harness/
+├── HarnessEngine.java          -- 中央协调器
+├── HarnessConfig.java          -- 配置类
+├── context/                    -- L1: 信息边界层
+├── tool/                       -- L2: 工具系统层
+├── orchestration/              -- L3: 执行编排层
+├── memory/                     -- L4: 记忆与状态层
+├── evaluation/                 -- L5: 评估与观测层
+└── recovery/                   -- L6: 约束校验与恢复层
+```
+
 ## 技术栈
 
 ### 后端

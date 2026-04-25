@@ -59,7 +59,9 @@ const SideMenu: React.FC<SideMenuProps> = () => {
       children: (
         <AgentTabContent
           agents={agents}
-          onSelectAgent={() => {}}
+          onSelectAgent={(agentId) => {
+            navigate('/chat', { state: { selectedAgentId: agentId } });
+          }}
           onCreateAgentClick={toggleAddAgentModal}
           onEditAgent={(agent) => {
             setEditingAgent(agent);

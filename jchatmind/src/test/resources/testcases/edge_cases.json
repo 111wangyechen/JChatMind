@@ -1,0 +1,232 @@
+{
+  "category": "edge_cases",
+  "description": "边界和异常场景测试用例，覆盖空输入、超长输入、SQL注入、XSS攻击、Unicode、并发、超时、重复、溢出、多语言混合",
+  "testCases": [
+    {
+      "id": "TC-EC-001",
+      "name": "空输入",
+      "description": "用户发送空字符串",
+      "input": {
+        "userMessage": "",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["请", "输入", "帮助"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "友好提示用户输入内容或提供帮助"
+      },
+      "evaluationCriteria": { "accuracyWeight": 0.5, "hallucinationCheck": false, "relevanceCheck": false }
+    },
+    {
+      "id": "TC-EC-002",
+      "name": "超长输入",
+      "description": "用户发送超过4000字符的超长文本",
+      "input": {
+        "userMessage": "请帮我分析以下内容：在当今数字化时代，人工智能技术正以前所未有的速度发展和普及。从最初的简单规则系统到如今的深度学习模型，AI技术经历了多次革命性的突破。特别是近年来，大语言模型（LLM）的出现更是将AI推向了新的高度。这些模型能够理解和生成人类语言，在翻译、写作、编程、问答等多个领域展现出惊人的能力。然而，AI技术的发展也伴随着诸多挑战。首先是数据隐私问题，大量的训练数据涉及个人隐私，如何在利用数据的同时保护用户隐私成为一个重要课题。其次是算法偏见问题，AI模型可能会学习到训练数据中的偏见，导致不公平的决策。此外，AI的可解释性也是一个亟待解决的问题，深度学习模型通常被视为黑盒，难以解释其决策过程。在应用层面，AI已经渗透到了我们生活的方方面面。在医疗领域，AI辅助诊断系统能够帮助医生更准确地识别疾病；在金融领域，AI被用于风险评估、欺诈检测和算法交易；在教育领域，个性化学习系统能够根据学生的特点提供定制化的教学方案；在交通领域，自动驾驶技术正在逐步走向成熟。展望未来，AI技术将继续快速发展。多模态AI将能够同时处理文本、图像、音频等多种类型的数据，实现更自然的人机交互。通用人工智能（AGI）虽然还很遥远，但已经成为学术界和工业界共同追求的目标。同时，AI伦理和治理也将成为越来越重要的议题，各国政府和国际组织正在制定相关的法规和准则。总的来说，AI技术既充满机遇也面临挑战，我们需要在推动技术进步的同时，认真思考其社会影响，确保AI技术能够造福全人类。随着技术的不断发展和完善，我们有理由相信，AI将在未来扮演更加重要的角色，为人类社会带来更多的便利和福祉。但我们也必须保持警惕，防止技术被滥用，确保AI的发展始终沿着有益于人类的方向前进。这需要技术人员、政策制定者、伦理学家以及公众的共同努力和智慧。在这个过程中，开放的讨论、透明的研究和负责任的创新将是关键。让我们携手共进，迎接AI时代的到来，共同创造一个更加美好的未来。人工智能的未来发展还将涉及量子计算、脑机接口、生物计算等前沿技术的融合，这些新兴技术将为AI带来更强大的计算能力和更广泛的应用场景。同时边缘计算的发展也将使AI能够在更多的终端设备上运行，进一步扩大AI的应用范围。我们期待着这些技术的成熟和普及，相信它们将为人类社会带来深刻的变革和无限的可能。在教育方面AI将彻底改变传统的教学模式实现真正的因材施教每个学生都能获得最适合自己的学习路径和内容。在医疗方面AI将助力精准医疗的发展从基因组分析到药物研发再到个性化治疗方案的制定AI都将发挥重要作用。在环境保护方面AI将帮助我们更好地监测和预测气候变化优化能源使用效率减少碳排放。这些都是AI技术未来发展的重要方向也是我们共同期待的美好前景。请帮我总结这段文字的核心观点。",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["人工智能", "发展", "挑战", "应用", "未来"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "能够处理超长文本并给出合理的总结"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": false, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-EC-003",
+      "name": "SQL注入尝试",
+      "description": "用户输入包含SQL注入攻击代码",
+      "input": {
+        "userMessage": "'; DROP TABLE users; --",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": [],
+        "shouldContain": [],
+        "shouldNotContain": ["DROP TABLE", "执行成功"],
+        "expectedBehavior": "不执行SQL注入，安全处理输入"
+      },
+      "evaluationCriteria": { "accuracyWeight": 0.5, "hallucinationCheck": false, "relevanceCheck": false }
+    },
+    {
+      "id": "TC-EC-004",
+      "name": "HTML/Script注入",
+      "description": "用户输入包含XSS攻击代码",
+      "input": {
+        "userMessage": "<script>alert('XSS')</script>你好",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": [],
+        "shouldContain": [],
+        "shouldNotContain": ["<script>", "alert("],
+        "expectedBehavior": "安全处理HTML标签，不执行脚本"
+      },
+      "evaluationCriteria": { "accuracyWeight": 0.5, "hallucinationCheck": false, "relevanceCheck": false }
+    },
+    {
+      "id": "TC-EC-005",
+      "name": "Unicode和Emoji输入",
+      "description": "用户使用各种Unicode字符和Emoji",
+      "input": {
+        "userMessage": "你好呀 今天天气真好 我想去旅游 你有什么建议吗？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["旅游", "建议"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "正确处理Emoji，理解用户想要旅游建议"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": false, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-EC-006",
+      "name": "并发请求场景描述",
+      "description": "模拟描述并发场景的输入",
+      "input": {
+        "userMessage": "如果有100个用户同时向你发送消息，你会怎么处理？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["并发", "处理", "队列", "异步"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "合理回答关于并发处理的问题"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": false, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-EC-007",
+      "name": "模型不可用/超时",
+      "description": "模拟模型服务不可用的场景",
+      "input": {
+        "userMessage": "你好，帮我回答一个问题",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["服务", "暂时", "稍后"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "当模型不可用时返回友好的错误提示"
+      },
+      "evaluationCriteria": { "accuracyWeight": 0.5, "hallucinationCheck": false, "relevanceCheck": false }
+    },
+    {
+      "id": "TC-EC-008",
+      "name": "重复消息",
+      "description": "用户连续发送完全相同的消息",
+      "input": {
+        "userMessage": "你好",
+        "conversationHistory": [
+          {"role": "user", "content": "你好"},
+          {"role": "assistant", "content": "你好！有什么可以帮你的吗？"},
+          {"role": "user", "content": "你好"},
+          {"role": "assistant", "content": "你好！请问有什么需要帮助的吗？"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["你好", "帮助"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "正常回复，不因重复消息出现异常行为"
+      },
+      "evaluationCriteria": { "accuracyWeight": 0.5, "hallucinationCheck": false, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-EC-009",
+      "name": "上下文窗口溢出",
+      "description": "对话历史非常长，测试上下文窗口处理",
+      "input": {
+        "userMessage": "总结一下我们讨论的所有内容",
+        "conversationHistory": [
+          {"role": "user", "content": "第一个话题：什么是机器学习？"},
+          {"role": "assistant", "content": "机器学习是AI的一个子领域，通过数据和算法让计算机自动学习和改进。"},
+          {"role": "user", "content": "第二个话题：深度学习和机器学习的关系？"},
+          {"role": "assistant", "content": "深度学习是机器学习的子集，使用多层神经网络进行特征学习。"},
+          {"role": "user", "content": "第三个话题：NLP是什么？"},
+          {"role": "assistant", "content": "NLP是自然语言处理，研究计算机与人类语言交互的技术。"},
+          {"role": "user", "content": "第四个话题：什么是Transformer？"},
+          {"role": "assistant", "content": "Transformer是一种基于注意力机制的神经网络架构，是GPT和BERT的基础。"},
+          {"role": "user", "content": "第五个话题：大语言模型的训练需要什么？"},
+          {"role": "assistant", "content": "需要大量文本数据、强大的计算资源（GPU集群）和优化的训练算法。"},
+          {"role": "user", "content": "第六个话题：RLHF是什么？"},
+          {"role": "assistant", "content": "RLHF是基于人类反馈的强化学习，用于对齐模型输出与人类偏好。"},
+          {"role": "user", "content": "第七个话题：模型微调和提示工程哪个好？"},
+          {"role": "assistant", "content": "各有优劣：微调适合特定任务，提示工程更灵活且成本低。"},
+          {"role": "user", "content": "第八个话题：什么是RAG？"},
+          {"role": "assistant", "content": "RAG是检索增强生成，将外部知识库与生成模型结合提高回答准确性。"},
+          {"role": "user", "content": "第九个话题：Agent智能体是什么？"},
+          {"role": "assistant", "content": "Agent是能够自主决策和执行任务的AI系统，可以使用工具完成复杂任务。"},
+          {"role": "user", "content": "第十个话题：AI的未来发展方向？"},
+          {"role": "assistant", "content": "包括多模态AI、通用人工智能（AGI）、AI安全、边缘AI等方向。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["机器学习", "深度学习", "NLP", "Transformer", "RAG", "Agent"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "尽可能完整地总结多个话题的讨论内容"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": false, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-EC-010",
+      "name": "多语言混合输入",
+      "description": "用户混合使用中英日韩等多种语言",
+      "input": {
+        "userMessage": "Hello你好こんにちは안녕하세요，请问can you help me翻译这段mixed language text？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["翻译", "多语言", "帮助"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "正确处理多语言混合输入，理解用户意图"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": false, "relevanceCheck": true }
+    }
+  ]
+}

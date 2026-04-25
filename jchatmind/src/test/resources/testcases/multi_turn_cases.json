@@ -1,0 +1,579 @@
+{
+  "category": "multi_turn",
+  "description": "多轮对话测试用例，覆盖上下文保持、指代消解、话题切换、多轮修正、记忆衰减、信息积累",
+  "testCases": [
+    {
+      "id": "TC-MT-001",
+      "name": "上下文保持-追问细节1",
+      "description": "用户在追问前一个话题的细节",
+      "input": {
+        "userMessage": "那它的首都是哪里？",
+        "conversationHistory": [
+          {"role": "user", "content": "日本的人口有多少？"},
+          {"role": "assistant", "content": "日本的人口约为1.25亿人，是世界上人口密度较高的国家之一。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["东京", "首都"],
+        "shouldContain": ["东京"],
+        "shouldNotContain": [],
+        "expectedBehavior": "根据上下文理解'它'指日本，回答东京"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-002",
+      "name": "上下文保持-追问细节2",
+      "description": "连续追问同一话题的更多细节",
+      "input": {
+        "userMessage": "那这门语言最常用的Web框架是什么？",
+        "conversationHistory": [
+          {"role": "user", "content": "Python有哪些特点？"},
+          {"role": "assistant", "content": "Python是一种高级编程语言，具有语法简洁、易学易读、丰富的标准库等特点。"},
+          {"role": "user", "content": "它主要用在哪些领域？"},
+          {"role": "assistant", "content": "Python主要应用于数据科学、机器学习、Web开发、自动化脚本、科学计算等领域。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["Django", "Flask", "FastAPI"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解上下文中'这门语言'指Python，回答Web框架"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-003",
+      "name": "上下文保持-追问细节3",
+      "description": "基于前文推荐进一步询问",
+      "input": {
+        "userMessage": "第二本适合初学者吗？",
+        "conversationHistory": [
+          {"role": "user", "content": "推荐几本关于机器学习的书"},
+          {"role": "assistant", "content": "推荐以下几本：1.《统计学习方法》李航著；2.《机器学习》周志华著（西瓜书）；3.《深度学习》Ian Goodfellow著。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["西瓜书", "周志华", "机器学习", "初学者"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解'第二本'指周志华的《机器学习》，给出适合性评价"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-004",
+      "name": "上下文保持-数值引用",
+      "description": "引用前文中提到的数值",
+      "input": {
+        "userMessage": "如果打八折呢？",
+        "conversationHistory": [
+          {"role": "user", "content": "一件衣服200元，一条裤子150元，总共多少？"},
+          {"role": "assistant", "content": "一件衣服200元加一条裤子150元，总共是350元。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["280", "八折"],
+        "shouldContain": ["280"],
+        "shouldNotContain": [],
+        "expectedBehavior": "基于上文350元计算八折价格280元"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-005",
+      "name": "指代消解-它1",
+      "description": "消解代词'它'的指代",
+      "input": {
+        "userMessage": "它是什么时候发明的？",
+        "conversationHistory": [
+          {"role": "user", "content": "电话和电脑哪个先发明的？"},
+          {"role": "assistant", "content": "电话先于电脑发明。亚历山大·贝尔在1876年发明了电话，而第一台通用电子计算机ENIAC在1945年问世。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["电话", "1876"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "根据上下文判断'它'最可能指电话，回答1876年"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-006",
+      "name": "指代消解-那个",
+      "description": "消解'那个'的指代",
+      "input": {
+        "userMessage": "那个怎么安装？",
+        "conversationHistory": [
+          {"role": "user", "content": "开发Python项目需要什么工具？"},
+          {"role": "assistant", "content": "开发Python项目通常需要：1. Python解释器；2. IDE（推荐PyCharm或VSCode）；3. pip包管理器；4. virtualenv虚拟环境工具。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["安装", "Python", "pip", "virtualenv"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "尝试理解'那个'的指代或请求澄清"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-007",
+      "name": "指代消解-这个方案",
+      "description": "消解'这个方案'的指代",
+      "input": {
+        "userMessage": "这个方案的成本大概多少？",
+        "conversationHistory": [
+          {"role": "user", "content": "我想搭建一个个人博客，有什么方案？"},
+          {"role": "assistant", "content": "搭建个人博客有以下方案：1. 使用WordPress+云服务器；2. 使用GitHub Pages+Jekyll（免费）；3. 使用Notion作为博客平台。推荐方案2，零成本且易维护。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["免费", "GitHub Pages", "成本", "零"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解'这个方案'指推荐的GitHub Pages方案，说明是免费的"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-008",
+      "name": "指代消解-前面提到的",
+      "description": "消解'前面提到的'的指代",
+      "input": {
+        "userMessage": "前面提到的第一种方法具体怎么实现？",
+        "conversationHistory": [
+          {"role": "user", "content": "Java中有哪些排序算法？"},
+          {"role": "assistant", "content": "Java中常用的排序算法包括：1. 冒泡排序；2. 快速排序；3. 归并排序；4. 堆排序。此外还可以直接使用Arrays.sort()方法。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["冒泡排序", "实现", "代码", "Java"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解第一种方法指冒泡排序，给出Java实现"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-009",
+      "name": "话题切换-自然切换",
+      "description": "用户自然地切换到新话题",
+      "input": {
+        "userMessage": "对了，你知道怎么做红烧肉吗？",
+        "conversationHistory": [
+          {"role": "user", "content": "Python的列表和元组有什么区别？"},
+          {"role": "assistant", "content": "列表是可变的，用方括号[]定义；元组是不可变的，用圆括号()定义。列表支持增删改操作，而元组一旦创建就不能修改。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["红烧肉", "做法", "食材", "步骤"],
+        "shouldContain": [],
+        "shouldNotContain": ["Python", "列表", "元组"],
+        "expectedBehavior": "识别话题切换，回答红烧肉做法"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-010",
+      "name": "话题切换-突然切换",
+      "description": "用户突然切换到完全无关的话题",
+      "input": {
+        "userMessage": "明天会下雨吗？",
+        "conversationHistory": [
+          {"role": "user", "content": "帮我写一个SQL查询语句"},
+          {"role": "assistant", "content": "好的，请告诉我你要查询哪个表的什么数据？"},
+          {"role": "user", "content": "查询用户表中年龄大于18岁的用户"},
+          {"role": "assistant", "content": "SELECT * FROM users WHERE age > 18;"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["天气", "无法确定", "不确定"],
+        "shouldContain": [],
+        "shouldNotContain": ["SQL", "查询"],
+        "expectedBehavior": "识别话题切换到天气，说明无法实时查询天气"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-011",
+      "name": "话题切换-回到之前话题",
+      "description": "用户切换话题后又回到之前话题",
+      "input": {
+        "userMessage": "回到刚才的话题，Python的字典怎么遍历？",
+        "conversationHistory": [
+          {"role": "user", "content": "Python的数据类型有哪些？"},
+          {"role": "assistant", "content": "Python的基本数据类型包括：int、float、str、bool、list、tuple、dict、set等。"},
+          {"role": "user", "content": "今天中午吃什么好？"},
+          {"role": "assistant", "content": "推荐一些选择：1. 清淡的话可以吃沙拉或粥；2. 想吃中餐的话可以试试番茄炒蛋盖饭；3. 快餐的话三明治也不错。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["字典", "遍历", "for", "items", "keys"],
+        "shouldContain": [],
+        "shouldNotContain": ["吃"],
+        "expectedBehavior": "回到Python话题，回答字典遍历方法"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-012",
+      "name": "多轮修正-纠正错误理解",
+      "description": "用户纠正AI的错误理解",
+      "input": {
+        "userMessage": "不是，我说的是数据库中的索引，不是Python列表的索引",
+        "conversationHistory": [
+          {"role": "user", "content": "索引是什么？"},
+          {"role": "assistant", "content": "在Python中，索引是用于访问列表、元组等序列类型中元素的位置编号，从0开始计数。例如 list[0] 表示获取第一个元素。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["数据库", "索引", "查询", "性能", "B+树"],
+        "shouldContain": [],
+        "shouldNotContain": ["Python列表"],
+        "expectedBehavior": "接受纠正，重新解释数据库索引的概念"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-013",
+      "name": "多轮修正-修改需求",
+      "description": "用户修改之前提出的需求",
+      "input": {
+        "userMessage": "等等，我改一下需求，不要用MySQL了，改用PostgreSQL",
+        "conversationHistory": [
+          {"role": "user", "content": "帮我设计一个用户管理系统的数据库表结构"},
+          {"role": "assistant", "content": "好的，以下是MySQL的用户管理系统表结构设计：\n1. users表：id(INT), username(VARCHAR), email(VARCHAR), password_hash(VARCHAR), created_at(DATETIME)\n2. roles表：id(INT), role_name(VARCHAR)\n3. user_roles表：user_id(INT), role_id(INT)"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["PostgreSQL", "用户", "表结构"],
+        "shouldContain": ["PostgreSQL"],
+        "shouldNotContain": [],
+        "expectedBehavior": "接受修改，基于PostgreSQL重新给出表结构"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-014",
+      "name": "多轮修正-补充条件",
+      "description": "用户补充之前遗漏的条件",
+      "input": {
+        "userMessage": "我忘了说了，还需要支持中文搜索，而且预算不超过1000元/月",
+        "conversationHistory": [
+          {"role": "user", "content": "推荐一个全文搜索引擎"},
+          {"role": "assistant", "content": "推荐Elasticsearch，它是目前最流行的开源全文搜索引擎，支持分布式部署，提供RESTful API，性能优秀。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["中文", "搜索", "预算", "Elasticsearch"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "考虑新的约束条件（中文支持、预算）重新给出建议"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-015",
+      "name": "记忆衰减-引用早期信息",
+      "description": "在长对话中引用早期的信息",
+      "input": {
+        "userMessage": "回到最开始的问题，你说的那个框架叫什么来着？",
+        "conversationHistory": [
+          {"role": "user", "content": "有什么好用的Java微服务框架？"},
+          {"role": "assistant", "content": "推荐Spring Cloud，它提供了完整的微服务解决方案。"},
+          {"role": "user", "content": "微服务之间怎么通信？"},
+          {"role": "assistant", "content": "常见的微服务通信方式有：1. RESTful API；2. gRPC；3. 消息队列（如RabbitMQ、Kafka）。"},
+          {"role": "user", "content": "消息队列和直接调用有什么区别？"},
+          {"role": "assistant", "content": "消息队列是异步通信，解耦性好；直接调用是同步通信，实时性好但耦合度较高。"},
+          {"role": "user", "content": "gRPC的性能怎么样？"},
+          {"role": "assistant", "content": "gRPC基于HTTP/2协议，使用Protocol Buffers序列化，性能比传统REST API高很多。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["Spring Cloud", "框架"],
+        "shouldContain": ["Spring Cloud"],
+        "shouldNotContain": [],
+        "expectedBehavior": "记住早期对话中提到的Spring Cloud框架"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-016",
+      "name": "记忆衰减-多轮后引用细节",
+      "description": "多轮后询问前面提到的具体细节",
+      "input": {
+        "userMessage": "你前面说的那个表有几个字段来着？",
+        "conversationHistory": [
+          {"role": "user", "content": "帮我设计一个简单的订单表"},
+          {"role": "assistant", "content": "订单表设计如下：id(主键), user_id(用户ID), product_id(商品ID), quantity(数量), total_price(总价), status(状态), created_at(创建时间) 共7个字段。"},
+          {"role": "user", "content": "状态有哪些枚举值？"},
+          {"role": "assistant", "content": "订单状态通常包括：待支付、已支付、已发货、已完成、已取消、已退款。"},
+          {"role": "user", "content": "退款流程一般是怎样的？"},
+          {"role": "assistant", "content": "退款流程通常是：用户申请退款→商家审核→退款处理→退款到账。"},
+          {"role": "user", "content": "支付超时的话怎么处理？"},
+          {"role": "assistant", "content": "支付超时通常使用延迟队列或定时任务来处理，超时后自动关闭订单释放库存。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["7", "字段", "订单表"],
+        "shouldContain": ["7"],
+        "shouldNotContain": [],
+        "expectedBehavior": "记住前面提到的订单表有7个字段"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-017",
+      "name": "记忆衰减-总结前文",
+      "description": "要求总结前面所有讨论的内容",
+      "input": {
+        "userMessage": "帮我总结一下我们刚才讨论的所有要点",
+        "conversationHistory": [
+          {"role": "user", "content": "我想学前端开发，从哪里开始？"},
+          {"role": "assistant", "content": "建议从HTML、CSS、JavaScript三大基础开始学习。"},
+          {"role": "user", "content": "学完基础之后呢？"},
+          {"role": "assistant", "content": "接下来可以学习一个前端框架，推荐React或Vue。"},
+          {"role": "user", "content": "Vue和React选哪个好？"},
+          {"role": "assistant", "content": "如果是初学者，Vue的学习曲线更平缓；如果想找工作，React的市场需求更大。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["HTML", "CSS", "JavaScript", "React", "Vue", "前端"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "完整总结前面讨论的前端学习路径要点"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-018",
+      "name": "信息积累-逐步完善需求",
+      "description": "用户通过多轮对话逐步完善需求",
+      "input": {
+        "userMessage": "好的，现在把这些需求整理出一份完整的需求文档大纲",
+        "conversationHistory": [
+          {"role": "user", "content": "我想做一个在线商城"},
+          {"role": "assistant", "content": "好的，在线商城通常需要商品管理、购物车、订单管理、支付等功能。"},
+          {"role": "user", "content": "对，还需要用户注册登录"},
+          {"role": "assistant", "content": "好的，加上用户系统。还需要考虑用户信息管理、收货地址管理等。"},
+          {"role": "user", "content": "还要有优惠券和促销活动功能"},
+          {"role": "assistant", "content": "了解，增加营销模块：优惠券管理、促销活动、满减规则等。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["商品管理", "购物车", "订单", "用户", "优惠券", "促销"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "整合多轮对话中积累的所有需求，输出完整大纲"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-019",
+      "name": "信息积累-收集偏好",
+      "description": "通过多轮对话收集用户偏好后给出建议",
+      "input": {
+        "userMessage": "根据我刚才说的这些偏好，推荐一款手机吧",
+        "conversationHistory": [
+          {"role": "user", "content": "我想买一部新手机"},
+          {"role": "assistant", "content": "好的，请问你有什么偏好？比如预算、品牌、用途等。"},
+          {"role": "user", "content": "预算5000左右"},
+          {"role": "assistant", "content": "5000元的预算可以选择很多不错的手机。你更看重拍照、性能还是续航？"},
+          {"role": "user", "content": "主要用来拍照，续航也要好"},
+          {"role": "assistant", "content": "了解，拍照和续航是重点。你对品牌有偏好吗？"},
+          {"role": "user", "content": "不要苹果，其他品牌都行"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["5000", "拍照", "续航", "推荐"],
+        "shouldContain": [],
+        "shouldNotContain": ["iPhone", "苹果"],
+        "expectedBehavior": "综合预算5000、重视拍照和续航、排除苹果，给出推荐"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-MT-020",
+      "name": "信息积累-逐步调试代码",
+      "description": "多轮对话中逐步调试代码",
+      "input": {
+        "userMessage": "现在还有一个问题，当输入为空时会报NullPointerException，怎么处理？",
+        "conversationHistory": [
+          {"role": "user", "content": "帮我写一个Java方法计算字符串中每个字符出现的次数"},
+          {"role": "assistant", "content": "public Map<Character, Integer> countChars(String str) {\n    Map<Character, Integer> map = new HashMap<>();\n    for (char c : str.toCharArray()) {\n        map.put(c, map.getOrDefault(c, 0) + 1);\n    }\n    return map;\n}"},
+          {"role": "user", "content": "能不能忽略空格？"},
+          {"role": "assistant", "content": "可以在循环中加一个判断：if (c != ' ') 即可跳过空格。"}
+        ],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["null", "空", "判断", "检查", "NullPointerException"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "建议添加null检查来避免NullPointerException"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    }
+  ]
+}

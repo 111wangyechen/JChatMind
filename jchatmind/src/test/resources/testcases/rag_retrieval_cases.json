@@ -1,0 +1,529 @@
+{
+  "category": "rag_retrieval",
+  "description": "RAG检索测试用例，覆盖精确匹配、模糊匹配、无结果、跨文档检索、多知识库、更新后检索、内容冲突",
+  "testCases": [
+    {
+      "id": "TC-RR-001",
+      "name": "精确匹配-产品价格查询",
+      "description": "知识库中有明确的产品价格信息",
+      "input": {
+        "userMessage": "JChatMind企业版的价格是多少？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-001",
+          "name": "产品信息库",
+          "documents": [
+            {
+              "id": "doc-001",
+              "content": "JChatMind产品定价方案：个人版免费，专业版每月99元，企业版每月599元，旗舰版每月1999元。所有付费版本支持7天免费试用。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["599", "企业版", "每月"],
+        "shouldContain": ["599"],
+        "shouldNotContain": ["99元/月", "1999"],
+        "expectedBehavior": "从知识库精确检索到企业版价格599元/月"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-002",
+      "name": "精确匹配-退款政策",
+      "description": "知识库中有明确的退款政策",
+      "input": {
+        "userMessage": "你们的退款政策是怎样的？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-001",
+          "name": "客服知识库",
+          "documents": [
+            {
+              "id": "doc-002",
+              "content": "退款政策：购买后7天内可无条件退款，7-30天内扣除10%手续费，超过30天不予退款。年费用户可在到期前30天申请退还剩余月份费用。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["7天", "退款", "30天", "手续费"],
+        "shouldContain": ["7天"],
+        "shouldNotContain": [],
+        "expectedBehavior": "准确引用退款政策的具体条款"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-003",
+      "name": "精确匹配-技术规格",
+      "description": "知识库中有精确的技术参数",
+      "input": {
+        "userMessage": "系统支持的最大并发用户数是多少？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-002",
+          "name": "技术文档库",
+          "documents": [
+            {
+              "id": "doc-003",
+              "content": "JChatMind系统性能指标：最大并发用户数10000，平均响应时间<200ms，99.9%可用性保证，支持水平扩展。单节点最大QPS为5000。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["10000", "并发"],
+        "shouldContain": ["10000"],
+        "shouldNotContain": [],
+        "expectedBehavior": "准确回答最大并发用户数为10000"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-004",
+      "name": "模糊匹配-如何使用",
+      "description": "用户用口语化方式提问",
+      "input": {
+        "userMessage": "怎么把文件传上去？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-003",
+          "name": "用户手册",
+          "documents": [
+            {
+              "id": "doc-004",
+              "content": "文档上传指南：1.点击左侧菜单的'知识库管理'；2.选择目标知识库；3.点击'上传文档'按钮；4.选择文件（支持PDF、Word、TXT格式，单文件不超过50MB）；5.等待解析完成即可使用。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["上传", "知识库", "文档", "步骤"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解'传上去'指文档上传，给出上传步骤"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-005",
+      "name": "模糊匹配-同义词理解",
+      "description": "用户使用同义词提问",
+      "input": {
+        "userMessage": "这个软件要花多少钱？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-001",
+          "name": "产品信息库",
+          "documents": [
+            {
+              "id": "doc-001",
+              "content": "JChatMind产品定价方案：个人版免费，专业版每月99元，企业版每月599元，旗舰版每月1999元。所有付费版本支持7天免费试用。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["价格", "定价", "免费", "99", "599", "1999"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解'花多少钱'即'定价'，返回定价信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-006",
+      "name": "模糊匹配-意图推理",
+      "description": "用户间接表达需求",
+      "input": {
+        "userMessage": "我的同事也想用，怎么加人？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-003",
+          "name": "用户手册",
+          "documents": [
+            {
+              "id": "doc-005",
+              "content": "团队成员管理：管理员可在'设置-团队管理'中添加新成员。步骤：1.进入团队管理页面；2.点击'邀请成员'；3.输入对方邮箱发送邀请；4.对方接受邀请后即加入团队。免费版最多5人，专业版最多20人，企业版无限制。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["邀请", "成员", "团队", "添加"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "理解用户想添加团队成员，给出添加步骤"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-007",
+      "name": "无结果-知识库无相关内容",
+      "description": "用户问的问题在知识库中不存在",
+      "input": {
+        "userMessage": "你们公司有多少员工？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-001",
+          "name": "产品信息库",
+          "documents": [
+            {
+              "id": "doc-001",
+              "content": "JChatMind产品定价方案：个人版免费，专业版每月99元，企业版每月599元。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["不清楚", "没有", "无法确认"],
+        "shouldContain": [],
+        "shouldNotContain": ["100人", "200人", "500人"],
+        "expectedBehavior": "诚实告知知识库中没有公司员工数量信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-008",
+      "name": "无结果-领域外问题",
+      "description": "用户问了与知识库领域完全无关的问题",
+      "input": {
+        "userMessage": "明天会下雨吗？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-002",
+          "name": "技术文档库",
+          "documents": [
+            {
+              "id": "doc-003",
+              "content": "JChatMind系统采用微服务架构，使用Spring Cloud框架。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["天气", "无法", "不清楚"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "说明知识库中没有天气相关信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-009",
+      "name": "跨文档检索-功能全览",
+      "description": "答案分散在多个文档中",
+      "input": {
+        "userMessage": "JChatMind都有哪些主要功能？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-004",
+          "name": "综合文档库",
+          "documents": [
+            {
+              "id": "doc-006",
+              "content": "JChatMind核心功能之一：智能对话。支持多轮对话、上下文记忆、多模型切换（DeepSeek、智谱AI等）。"
+            },
+            {
+              "id": "doc-007",
+              "content": "JChatMind核心功能之二：知识库管理。支持文档上传、自动向量化、语义检索、知识库问答。"
+            },
+            {
+              "id": "doc-008",
+              "content": "JChatMind核心功能之三：智能体（Agent）。支持自定义工具调用、任务规划、自动执行。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["对话", "知识库", "智能体", "工具"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "汇总多个文档信息，完整列出主要功能"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-010",
+      "name": "跨文档检索-故障排查",
+      "description": "故障排查信息分散在不同文档",
+      "input": {
+        "userMessage": "系统响应很慢该怎么排查？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-005",
+          "name": "运维知识库",
+          "documents": [
+            {
+              "id": "doc-009",
+              "content": "性能排查-数据库层面：检查慢SQL、索引是否合理、连接池配置。推荐使用EXPLAIN分析SQL执行计划。"
+            },
+            {
+              "id": "doc-010",
+              "content": "性能排查-应用层面：检查JVM内存使用、线程池状态、是否有死锁。推荐使用JProfiler或Arthas诊断。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["数据库", "JVM", "排查", "SQL", "内存"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "综合数据库和应用两方面给出排查建议"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-011",
+      "name": "多知识库检索-跨库查询1",
+      "description": "需要同时查询产品库和技术库",
+      "input": {
+        "userMessage": "企业版支持多少并发，价格多少？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-multi-001",
+          "name": "多知识库",
+          "documents": [
+            {
+              "id": "doc-price",
+              "content": "JChatMind定价：企业版每月599元，包含无限对话、10个知识库、优先技术支持。"
+            },
+            {
+              "id": "doc-tech",
+              "content": "企业版技术规格：支持最大并发5000用户，独立部署，99.9%SLA保证。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["599", "5000", "企业版", "并发"],
+        "shouldContain": ["599", "5000"],
+        "shouldNotContain": [],
+        "expectedBehavior": "从两个知识库综合回答价格和并发数"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-012",
+      "name": "多知识库检索-跨库查询2",
+      "description": "一个库有答案另一个没有",
+      "input": {
+        "userMessage": "如何配置SSO单点登录？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-multi-002",
+          "name": "多知识库",
+          "documents": [
+            {
+              "id": "doc-faq",
+              "content": "常见问题：如何重置密码？如何修改邮箱？如何开通API？"
+            },
+            {
+              "id": "doc-sso",
+              "content": "SSO配置指南：1.进入管理后台-安全设置；2.启用SSO功能；3.配置SAML 2.0或OAuth 2.0；4.填入IdP的Metadata URL；5.测试SSO连接；6.启用强制SSO登录。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["SSO", "SAML", "OAuth", "配置"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "从SSO配置文档中检索出配置步骤"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-013",
+      "name": "知识库更新后检索-使用最新版本",
+      "description": "知识库内容更新后应使用最新信息",
+      "input": {
+        "userMessage": "当前支持哪些AI模型？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-006",
+          "name": "模型支持库",
+          "documents": [
+            {
+              "id": "doc-models-v2",
+              "content": "[更新于2024-03] 当前支持的AI模型：DeepSeek-V3、智谱GLM-4、通义千问2.5、文心一言4.0、Llama3。即将支持：Mistral、Claude。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["DeepSeek", "智谱", "通义", "文心", "Llama"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "基于最新的知识库文档回答支持的模型列表"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-014",
+      "name": "知识库内容冲突-版本不一致1",
+      "description": "两个文档对同一问题给出不同答案",
+      "input": {
+        "userMessage": "免费版支持多少个知识库？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-007",
+          "name": "混合文档库",
+          "documents": [
+            {
+              "id": "doc-old",
+              "content": "[2023年版] 免费版功能：支持3个知识库，每个知识库最多100个文档。"
+            },
+            {
+              "id": "doc-new",
+              "content": "[2024年版] 免费版功能：支持5个知识库，每个知识库最多200个文档。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["知识库", "免费版", "5个"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "识别版本冲突，优先使用最新版本的信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-RR-015",
+      "name": "知识库内容冲突-数据矛盾",
+      "description": "两个文档包含矛盾的数据",
+      "input": {
+        "userMessage": "系统的最大文件上传大小是多少？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-008",
+          "name": "冲突文档库",
+          "documents": [
+            {
+              "id": "doc-limit-a",
+              "content": "文件上传限制：单个文件最大50MB，支持PDF、Word、TXT格式。"
+            },
+            {
+              "id": "doc-limit-b",
+              "content": "文件上传说明：单个文件大小限制为100MB，支持PDF、Word、TXT、Markdown格式。"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["文件", "上传", "大小", "MB"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "识别出数据矛盾，说明存在不一致并给出两个数据源的信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    }
+  ]
+}

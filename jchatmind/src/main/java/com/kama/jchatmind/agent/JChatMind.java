@@ -1,5 +1,6 @@
 package com.kama.jchatmind.agent;
 
+import com.kama.jchatmind.agent.harness.HarnessEngine;
 import com.kama.jchatmind.converter.ChatMessageConverter;
 import com.kama.jchatmind.message.SseMessage;
 import com.kama.jchatmind.model.dto.ChatMessageDTO;
@@ -84,7 +85,11 @@ public class JChatMind {
     // AI 返回的，已经持久化，但是需要 sse 发给前端的消息
     private final List<ChatMessageDTO> pendingChatMessages = new ArrayList<>();
 
+    // Harness 引擎
+    private final HarnessEngine harness;
+
     public JChatMind() {
+        this.harness = null;
     }
 
     public JChatMind(String agentId,
@@ -99,7 +104,8 @@ public class JChatMind {
                      String chatSessionId,
                      SseService sseService,
                      ChatMessageFacadeService chatMessageFacadeService,
-                     ChatMessageConverter chatMessageConverter
+                     ChatMessageConverter chatMessageConverter,
+                     HarnessEngine harness
     ) {
         this.agentId = agentId;
         this.name = name;
@@ -116,6 +122,8 @@ public class JChatMind {
 
         this.chatMessageFacadeService = chatMessageFacadeService;
         this.chatMessageConverter = chatMessageConverter;
+
+        this.harness = harness;
 
         this.agentState = AgentState.IDLE;
 
@@ -318,14 +326,159 @@ public class JChatMind {
             throw new IllegalStateException("Agent is not idle");
         }
 
+        // Harness: 运行开始
+        if (harness != null) {
+            try {
+                harness.onRunStart(this.chatSessionId);
+            } catch (Exception e) {
+                log.warn("[Harness] onRunStart 异常，降级跳过: {}", e.getMessage());
+            }
+        }
+        int verificationRetryCount = 0;
+
         try {
-            for (int i = 0; i < MAX_STEPS && agentState != AgentState.FINISHED; i++) {
-                // 当前步骤，用于实现 Agent Loop
+            for (int i = 0; i < MAX_STEPS; i++) {
                 int currentStep = i + 1;
-                step();
+
+                // Harness L1: 上下文预算检查和压缩
+                if (harness != null) {
+                    try {
+                        agentState = AgentState.THINKING;
+                        List<Message> currentMessages = this.chatMemory.get(this.chatSessionId);
+                        List<Message> processedMessages = harness.beforeThink(currentMessages, this.chatSessionId);
+                        // 如果消息被压缩了，更新 chatMemory
+                        if (processedMessages != currentMessages) {
+                            this.chatMemory.clear(this.chatSessionId);
+                            this.chatMemory.add(this.chatSessionId, processedMessages);
+                        }
+                    } catch (Exception e) {
+                        log.warn("[Harness] beforeThink 异常，降级跳过: {}", e.getMessage());
+                    }
+                }
+
+                // Harness L3: 首轮可选规划
+                if (harness != null && i == 0) {
+                    try {
+                        if (harness.shouldPlan(getLastUserMessage())) {
+                            agentState = AgentState.PLANNING;
+                            String plan = harness.plan(getLastUserMessage(), getAvailableToolNames());
+                            log.info("[Harness] 执行计划: {}", plan);
+                        }
+                    } catch (Exception e) {
+                        log.warn("[Harness] 规划异常，降级跳过: {}", e.getMessage());
+                    }
+                }
+
+                // 原有 think
+                agentState = AgentState.THINKING;
+                boolean hasToolCalls = think();
+
+                // Harness L5: 输出自验证
+                if (harness != null) {
+                    try {
+                        AssistantMessage lastOutput = this.lastChatResponse.getResult().getOutput();
+                        List<AssistantMessage.ToolCall> toolCalls = lastOutput.getToolCalls();
+                        boolean verified = harness.afterThink(lastOutput, toolCalls,
+                                this.chatMemory.get(this.chatSessionId));
+
+                        if (!verified && verificationRetryCount < harness.getConfig().getMaxVerificationRetries()) {
+                            // 验证失败，注入修正提示并重试
+                            verificationRetryCount++;
+                            String hint = harness.generateCorrectionHint();
+                            if (hint != null) {
+                                this.chatMemory.add(this.chatSessionId,
+                                        new UserMessage(hint));
+                            }
+                            log.warn("[Harness] 输出验证未通过，第 {} 次重试", verificationRetryCount);
+                            if (harness != null) {
+                                try {
+                                    harness.onStepComplete(currentStep, agentState.name());
+                                } catch (Exception e) {
+                                    log.warn("[Harness] onStepComplete 异常: {}", e.getMessage());
+                                }
+                            }
+                            continue; // 重新 think
+                        }
+                        verificationRetryCount = 0; // 重置
+                    } catch (Exception e) {
+                        log.warn("[Harness] afterThink 异常，降级跳过: {}", e.getMessage());
+                        verificationRetryCount = 0;
+                    }
+                }
+
+                if (hasToolCalls) {
+                    agentState = AgentState.EXECUTING;
+
+                    // Harness L2+L6: 工具调用验证 + Guardrails
+                    boolean executeAllowed = true;
+                    if (harness != null) {
+                        try {
+                            AssistantMessage lastOutput = this.lastChatResponse.getResult().getOutput();
+                            List<AssistantMessage.ToolCall> toolCalls = lastOutput.getToolCalls();
+                            executeAllowed = harness.beforeExecute(toolCalls, this.availableTools);
+                        } catch (Exception e) {
+                            log.warn("[Harness] beforeExecute 异常，降级允许执行: {}", e.getMessage());
+                            executeAllowed = true;
+                        }
+                    }
+
+                    if (executeAllowed) {
+                        try {
+                            execute();
+                            // Harness: 执行后处理
+                            if (harness != null) {
+                                try {
+                                    List<Message> msgs = this.chatMemory.get(this.chatSessionId);
+                                    Message lastMsg = msgs.get(msgs.size() - 1);
+                                    if (lastMsg instanceof ToolResponseMessage trm) {
+                                        harness.afterExecute(trm);
+                                    }
+                                } catch (Exception e) {
+                                    log.warn("[Harness] afterExecute 异常: {}", e.getMessage());
+                                }
+                            }
+                        } catch (Exception e) {
+                            // Harness L6: 错误恢复
+                            boolean recovered = false;
+                            if (harness != null) {
+                                try {
+                                    recovered = harness.onError(e, "EXECUTE");
+                                } catch (Exception ex) {
+                                    log.warn("[Harness] onError 异常: {}", ex.getMessage());
+                                }
+                            }
+                            if (!recovered) {
+                                throw e;
+                            }
+                            log.info("[Harness] 工具执行错误已恢复");
+                        }
+                    } else {
+                        // 工具调用被拒绝，注入拒绝原因到上下文
+                        log.warn("[Harness] 工具调用被安全护栏拒绝");
+                        this.chatMemory.add(this.chatSessionId,
+                                new UserMessage(
+                                        "系统提示：上一次的工具调用请求因安全原因被拒绝，请使用其他方式回答用户问题。"));
+                    }
+                } else {
+                    agentState = AgentState.FINISHED;
+                }
+
+                // Harness L3+L5: 步骤完成追踪
+                if (harness != null) {
+                    try {
+                        harness.onStepComplete(currentStep, agentState.name());
+                    } catch (Exception e) {
+                        log.warn("[Harness] onStepComplete 异常: {}", e.getMessage());
+                    }
+                }
+
                 if (currentStep >= MAX_STEPS) {
                     agentState = AgentState.FINISHED;
                     log.warn("Max steps reached, stopping agent");
+                }
+
+                if (agentState == AgentState.FINISHED) {
+                    break;
                 }
             }
             agentState = AgentState.FINISHED;
@@ -333,7 +486,35 @@ public class JChatMind {
             agentState = AgentState.ERROR;
             log.error("Error running agent", e);
             throw new RuntimeException("Error running agent", e);
+        } finally {
+            // Harness: 运行结束，输出指标报告
+            if (harness != null) {
+                try {
+                    harness.onRunComplete(this.chatSessionId);
+                    log.info("[Harness] 执行指标报告: {}", harness.getMetricsReport());
+                } catch (Exception e) {
+                    log.warn("[Harness] onRunComplete 异常: {}", e.getMessage());
+                }
+            }
         }
+    }
+
+    /** 获取最后一条用户消息文本 */
+    private String getLastUserMessage() {
+        List<Message> messages = this.chatMemory.get(this.chatSessionId);
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            if (messages.get(i) instanceof UserMessage userMsg) {
+                return userMsg.getText();
+            }
+        }
+        return "";
+    }
+
+    /** 获取可用工具名称列表 */
+    private List<String> getAvailableToolNames() {
+        return this.availableTools.stream()
+                .map(tc -> tc.getToolDefinition().name())
+                .toList();
     }
 
     @Override

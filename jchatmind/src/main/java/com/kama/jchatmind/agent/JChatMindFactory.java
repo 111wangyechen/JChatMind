@@ -1,6 +1,8 @@
 package com.kama.jchatmind.agent;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.kama.jchatmind.agent.harness.HarnessConfig;
+import com.kama.jchatmind.agent.harness.HarnessEngine;
 import com.kama.jchatmind.agent.tools.Tool;
 import com.kama.jchatmind.config.ChatClientRegistry;
 import com.kama.jchatmind.converter.AgentConverter;
@@ -204,6 +206,11 @@ public class JChatMindFactory {
         if (Objects.isNull(chatClient)) {
             throw new IllegalStateException("未找到对应的 ChatClient: " + agent.getModel());
         }
+
+        // 创建 HarnessEngine
+        HarnessConfig harnessConfig = HarnessConfig.builder().build();
+        HarnessEngine harness = new HarnessEngine(harnessConfig, chatClient);
+
         return new JChatMind(
                 agent.getId(),
                 agent.getName(),
@@ -217,7 +224,8 @@ public class JChatMindFactory {
                 chatSessionId,
                 sseService,
                 chatMessageFacadeService,
-                chatMessageConverter
+                chatMessageConverter,
+                harness
         );
     }
 

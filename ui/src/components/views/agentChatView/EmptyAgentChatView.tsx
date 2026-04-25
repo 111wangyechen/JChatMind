@@ -7,7 +7,7 @@ import {
   DownOutlined,
 } from "@ant-design/icons";
 import { Sender } from "@ant-design/x";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   type AgentVO,
   createChatMessage,
@@ -29,7 +29,10 @@ const EmptyAgentChatView: React.FC<DefaultAgentChatViewProps> = ({
   agents,
 }) => {
   const [message, setMessage] = useState("");
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const location = useLocation();
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(
+    location.state?.selectedAgentId ?? null
+  );
 
   const navigate = useNavigate();
   const { refreshChatSessions } = useChatSessions();

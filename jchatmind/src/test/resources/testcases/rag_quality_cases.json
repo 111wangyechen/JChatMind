@@ -1,0 +1,370 @@
+{
+  "category": "rag_quality",
+  "description": "RAG回答质量测试用例，覆盖引用准确性、幻觉检测、信息完整性、来源标注、知识边界、混合回答、矛盾检测",
+  "testCases": [
+    {
+      "id": "TC-RQ-001",
+      "name": "引用准确性-价格引用",
+      "description": "回答应准确引用知识库中的价格信息",
+      "input": {
+        "userMessage": "专业版多少钱？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q001",
+          "name": "产品库",
+          "documents": [{"id": "doc-q001", "content": "产品定价：专业版99元/月，企业版599元/月。年付享8折优惠。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["99", "每月", "专业版"],
+        "shouldContain": ["99"],
+        "shouldNotContain": ["599", "199", "299"],
+        "expectedBehavior": "准确引用专业版价格99元/月"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-002",
+      "name": "引用准确性-日期引用",
+      "description": "回答应准确引用知识库中的日期信息",
+      "input": {
+        "userMessage": "下次维护是什么时候？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q002",
+          "name": "公告库",
+          "documents": [{"id": "doc-q002", "content": "系统维护通知：计划于2024年4月15日凌晨2:00-6:00进行系统维护，届时服务将暂停。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["4月15日", "凌晨", "维护"],
+        "shouldContain": ["4月15日"],
+        "shouldNotContain": [],
+        "expectedBehavior": "准确引用维护时间"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-003",
+      "name": "引用准确性-流程步骤引用",
+      "description": "回答应准确引用操作步骤",
+      "input": {
+        "userMessage": "怎么创建知识库？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q003",
+          "name": "帮助文档",
+          "documents": [{"id": "doc-q003", "content": "创建知识库步骤：1.登录系统；2.点击左侧'知识库'菜单；3.点击'新建知识库'按钮；4.填写名称和描述；5.选择向量模型；6.点击确认创建。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["知识库", "新建", "步骤", "名称"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "按知识库文档列出创建步骤"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-004",
+      "name": "幻觉检测-编造不存在的功能",
+      "description": "检测AI是否编造知识库中不存在的功能",
+      "input": {
+        "userMessage": "JChatMind支持视频通话功能吗？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q004",
+          "name": "功能文档",
+          "documents": [{"id": "doc-q004", "content": "JChatMind功能列表：智能对话、知识库管理、Agent工具调用、文档上传、SSE实时推送。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["不支持", "没有", "视频通话"],
+        "shouldContain": [],
+        "shouldNotContain": ["支持视频通话", "视频通话功能已上线"],
+        "expectedBehavior": "诚实说明知识库中没有视频通话功能"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-005",
+      "name": "幻觉检测-编造具体数据",
+      "description": "检测AI是否编造知识库中不存在的数据",
+      "input": {
+        "userMessage": "系统一共有多少注册用户？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q005",
+          "name": "产品介绍",
+          "documents": [{"id": "doc-q005", "content": "JChatMind是一款AI对话平台，支持多模型接入、知识库管理和Agent智能体功能。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["不清楚", "没有", "无法确认"],
+        "shouldContain": [],
+        "shouldNotContain": ["10万", "100万", "50万"],
+        "expectedBehavior": "不编造用户数，诚实说明没有相关数据"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-006",
+      "name": "幻觉检测-编造联系方式",
+      "description": "检测AI是否编造不存在的联系方式",
+      "input": {
+        "userMessage": "你们客服电话多少？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q006",
+          "name": "客服信息",
+          "documents": [{"id": "doc-q006", "content": "客服支持：工作日9:00-18:00提供在线客服支持。VIP用户享有7x24小时专属客服。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["在线客服", "工作日"],
+        "shouldContain": [],
+        "shouldNotContain": ["400-", "010-", "021-"],
+        "expectedBehavior": "不编造电话号码，只提供知识库中的在线客服信息"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-007",
+      "name": "信息完整性-全面回答",
+      "description": "回答应覆盖所有关键信息点",
+      "input": {
+        "userMessage": "企业版都包含哪些服务？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q007",
+          "name": "服务说明",
+          "documents": [{"id": "doc-q007", "content": "企业版服务内容：1.无限对话额度；2.最多50个知识库；3.API接口访问权限；4.专属客户经理；5.7x24技术支持；6.定制化部署方案；7.数据安全审计。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["无限对话", "知识库", "API", "客户经理", "技术支持", "部署", "安全"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "完整列出全部7项服务内容"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-008",
+      "name": "信息完整性-不遗漏关键条件",
+      "description": "回答不应遗漏重要的限制条件",
+      "input": {
+        "userMessage": "免费版有什么限制？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q008",
+          "name": "版本对比",
+          "documents": [{"id": "doc-q008", "content": "免费版限制：每日对话次数限制50次，知识库数量限制3个，单知识库文档数量限制20个，不支持API接口，不支持自定义模型，数据保留期限30天。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["50次", "3个", "20个", "API", "30天"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "完整列出所有限制条件"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-009",
+      "name": "来源标注-明确引用来源",
+      "description": "回答应标明信息来源",
+      "input": {
+        "userMessage": "关于数据安全，你们有什么保障？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q009",
+          "name": "安全文档",
+          "documents": [{"id": "doc-q009", "content": "《JChatMind数据安全白皮书》：所有数据采用AES-256加密存储，传输使用TLS 1.3协议，通过ISO 27001认证，支持数据隔离和定期安全审计。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["AES-256", "TLS", "ISO 27001", "加密"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "引用安全白皮书中的具体安全措施"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-010",
+      "name": "来源标注-多文档引用",
+      "description": "回答涉及多个文档时应分别标注",
+      "input": {
+        "userMessage": "总结一下产品的优势",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q010",
+          "name": "综合库",
+          "documents": [
+            {"id": "doc-q010a", "content": "技术优势：支持多模型切换、毫秒级响应、高可用架构。"},
+            {"id": "doc-q010b", "content": "服务优势：7x24客服、1对1技术支持、99.9% SLA保证。"},
+            {"id": "doc-q010c", "content": "成本优势：按量计费、免费入门版、无隐藏费用。"}
+          ]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["技术", "服务", "成本", "多模型", "SLA", "免费"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "从技术、服务、成本三个维度全面总结优势"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-011",
+      "name": "知识边界-明确说不知道",
+      "description": "知识库没有相关信息时应承认不知道",
+      "input": {
+        "userMessage": "你们明年的产品路线图是什么？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q011",
+          "name": "产品库",
+          "documents": [{"id": "doc-q011", "content": "JChatMind 2024年Q1更新日志：新增Agent功能、优化RAG检索、支持DeepSeek模型。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["不清楚", "暂无", "没有"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "承认没有明年路线图信息，不编造"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-012",
+      "name": "知识边界-部分有信息",
+      "description": "知识库只有部分相关信息",
+      "input": {
+        "userMessage": "你们和竞品比有什么优势和劣势？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q012",
+          "name": "竞品分析",
+          "documents": [{"id": "doc-q012", "content": "JChatMind竞争优势：支持国产模型、私有化部署、价格更低。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["优势", "国产模型", "私有化", "劣势"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "回答知识库中有的优势信息，对劣势说明暂无相关数据"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-013",
+      "name": "混合回答-知识库加通用知识1",
+      "description": "需要结合知识库和通用知识回答",
+      "input": {
+        "userMessage": "什么是RAG？你们的产品是怎么实现的？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q013",
+          "name": "技术文档",
+          "documents": [{"id": "doc-q013", "content": "JChatMind RAG实现：使用BGE-M3模型进行文本向量化，基于PostgreSQL pgvector存储向量，检索时采用余弦相似度匹配Top-K结果。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["RAG", "检索增强生成", "BGE-M3", "向量", "余弦相似度"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "先用通用知识解释RAG概念，再引用知识库说明具体实现"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-014",
+      "name": "混合回答-知识库加通用知识2",
+      "description": "需要用通用知识补充知识库答案",
+      "input": {
+        "userMessage": "你们使用的Spring AI框架有什么特点？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q014",
+          "name": "架构文档",
+          "documents": [{"id": "doc-q014", "content": "JChatMind技术栈：后端使用Spring Boot 3.5 + Spring AI 1.1，前端使用React + TypeScript。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["Spring AI", "Spring Boot", "特点"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "结合知识库的技术栈信息和Spring AI通用知识来回答"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    },
+    {
+      "id": "TC-RQ-015",
+      "name": "矛盾检测-回答不应与知识库矛盾",
+      "description": "检测回答是否与知识库信息矛盾",
+      "input": {
+        "userMessage": "你们产品是开源的吗？",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": {
+          "id": "kb-q015",
+          "name": "产品信息",
+          "documents": [{"id": "doc-q015", "content": "JChatMind是一款商业化AI对话平台，提供免费版和付费版。代码不开源，但提供API接口供第三方集成。"}]
+        }
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["不开源", "商业化", "API"],
+        "shouldContain": [],
+        "shouldNotContain": ["开源的", "代码已开源", "GitHub开源"],
+        "expectedBehavior": "明确说明产品不开源，但提供API，不与知识库矛盾"
+      },
+      "evaluationCriteria": { "accuracyWeight": 1.0, "hallucinationCheck": true, "relevanceCheck": true }
+    }
+  ]
+}

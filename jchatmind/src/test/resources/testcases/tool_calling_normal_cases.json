@@ -1,0 +1,369 @@
+{
+  "category": "tool_calling_normal",
+  "description": "工具调用正常场景测试用例，覆盖单工具调用、多工具调用、链式调用、参数推理、关键词误触",
+  "testCases": [
+    {
+      "id": "TC-TN-001",
+      "name": "单工具-天气查询-指定城市",
+      "description": "用户明确指定城市查询天气",
+      "input": {
+        "userMessage": "今天深圳天气怎么样？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather",
+        "expectedKeywords": ["深圳", "天气"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用weather工具查询深圳天气并返回结果"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-002",
+      "name": "单工具-天气查询-明天",
+      "description": "用户查询明天的天气",
+      "input": {
+        "userMessage": "北京明天的天气预报",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather",
+        "expectedKeywords": ["北京", "天气", "明天"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用weather工具查询北京明天天气"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-003",
+      "name": "单工具-天气查询-出行建议",
+      "description": "用户基于天气询问出行建议",
+      "input": {
+        "userMessage": "上海这周末适合户外活动吗？帮我看看天气",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather",
+        "expectedKeywords": ["上海", "天气", "周末"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用weather工具查询上海周末天气并给出出行建议"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-004",
+      "name": "单工具-日期查询-今天",
+      "description": "用户询问今天日期",
+      "input": {
+        "userMessage": "今天是几号？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getDate",
+        "expectedKeywords": ["日期", "今天"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用getDate工具获取当前日期"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-005",
+      "name": "单工具-日期查询-星期",
+      "description": "用户询问今天是星期几",
+      "input": {
+        "userMessage": "今天星期几？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getDate",
+        "expectedKeywords": ["星期", "日期"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用getDate工具获取日期并推断星期几"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-006",
+      "name": "单工具-城市信息查询",
+      "description": "用户询问当前所在城市",
+      "input": {
+        "userMessage": "我现在在哪个城市？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getCity",
+        "expectedKeywords": ["城市", "位置"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用getCity工具获取当前城市信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-007",
+      "name": "单工具-城市信息-定位",
+      "description": "用户请求定位当前位置",
+      "input": {
+        "userMessage": "帮我定位一下我在哪儿",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getCity",
+        "expectedKeywords": ["城市", "定位"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用getCity工具获取位置信息"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-008",
+      "name": "多工具-天气加日期",
+      "description": "用户同时需要天气和日期信息",
+      "input": {
+        "userMessage": "今天是什么日子？顺便帮我看看广州的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getDate",
+        "expectedKeywords": ["日期", "天气", "广州"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用getDate和weather两个工具获取日期和天气"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-009",
+      "name": "多工具-天气加日期-出行",
+      "description": "用户需要结合日期和天气做出行计划",
+      "input": {
+        "userMessage": "帮我看看今天的日期和成都的天气，我想决定要不要出门",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getDate",
+        "expectedKeywords": ["日期", "天气", "成都", "出门"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "调用getDate和weather工具，综合给出出行建议"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-010",
+      "name": "链式调用-先查城市再查天气1",
+      "description": "不指定城市查天气，需要先获取城市",
+      "input": {
+        "userMessage": "我这边今天天气怎么样？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getCity",
+        "expectedKeywords": ["城市", "天气"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "先调用getCity获取当前城市，再调用weather查询天气"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-011",
+      "name": "链式调用-先查城市再查天气2",
+      "description": "隐含需要先确定城市再查天气",
+      "input": {
+        "userMessage": "看看我所在地方明天要不要带伞",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getCity",
+        "expectedKeywords": ["城市", "天气", "下雨", "伞"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "先调用getCity获取位置，再调用weather查天气，给出是否需要带伞的建议"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-012",
+      "name": "工具参数推理-隐含时间",
+      "description": "用户未明确说出日期参数但可推理",
+      "input": {
+        "userMessage": "后天杭州天气好不好？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather",
+        "expectedKeywords": ["杭州", "天气", "后天"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "推理出'后天'的日期参数，调用weather查询"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-013",
+      "name": "工具参数推理-上下文推断城市",
+      "description": "从对话上下文推断城市参数",
+      "input": {
+        "userMessage": "那里的天气怎么样？",
+        "conversationHistory": [
+          {"role": "user", "content": "南京有什么好玩的地方？"},
+          {"role": "assistant", "content": "南京有很多景点，比如中山陵、夫子庙、玄武湖等。"}
+        ],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather",
+        "expectedKeywords": ["南京", "天气"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "从上下文推断'那里'指南京，调用weather查询南京天气"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-014",
+      "name": "不需要工具-提到天气但不查询",
+      "description": "用户提到天气关键词但不需要实际查询",
+      "input": {
+        "userMessage": "天气预报的原理是什么？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["天气预报", "原理", "气象"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "识别用户在问原理知识而非查询天气，不调用工具"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TN-015",
+      "name": "不需要工具-日期相关但不查询",
+      "description": "用户提到日期关键词但不需要查询当前日期",
+      "input": {
+        "userMessage": "中国的国庆节是几月几号？",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["国庆节", "10月1日"],
+        "shouldContain": ["10月1"],
+        "shouldNotContain": [],
+        "expectedBehavior": "回答国庆节日期常识而非调用日期工具"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,366 @@
+{
+  "category": "tool_calling_exception",
+  "description": "工具调用异常场景测试用例，覆盖工具不存在、参数错误、超时、异常结果、网络异常、重试、空结果",
+  "testCases": [
+    {
+      "id": "TC-TE-001",
+      "name": "工具不存在-请求未注册工具",
+      "description": "用户请求使用不存在的工具功能",
+      "input": {
+        "userMessage": "帮我发一封邮件给张三",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["无法", "不支持", "邮件"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "告知用户当前没有发送邮件的工具"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-002",
+      "name": "工具不存在-请求搜索功能",
+      "description": "用户请求搜索但没有搜索工具",
+      "input": {
+        "userMessage": "帮我搜索一下最新的iPhone价格",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["无法", "搜索", "不具备"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "告知用户没有搜索能力"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-003",
+      "name": "工具不存在-无可用工具",
+      "description": "没有任何可用工具时用户请求工具功能",
+      "input": {
+        "userMessage": "帮我查一下深圳的天气",
+        "conversationHistory": [],
+        "availableTools": [],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["无法", "抱歉", "天气"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "在没有工具的情况下无法查询实时天气，应说明情况"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-004",
+      "name": "参数错误-城市名无效",
+      "description": "用户提供了无效的城市名",
+      "input": {
+        "userMessage": "查一下asdfghjkl的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather",
+        "expectedKeywords": ["无效", "城市", "无法识别"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "尝试调用工具，处理无效参数返回的错误"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-005",
+      "name": "参数错误-日期格式异常",
+      "description": "用户提供非法日期格式",
+      "input": {
+        "userMessage": "帮我查13月32号深圳的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": false,
+        "expectedToolName": null,
+        "expectedKeywords": ["日期", "无效", "不存在"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "识别出无效日期并提示用户"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-006",
+      "name": "参数缺失-缺少必要参数",
+      "description": "用户请求需要参数但未提供任何参数",
+      "input": {
+        "userMessage": "帮我查天气",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getCity",
+        "expectedKeywords": ["城市", "哪个", "天气"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "尝试获取城市或询问用户指定城市"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-007",
+      "name": "工具执行超时-天气查询超时",
+      "description": "模拟工具执行超时场景",
+      "input": {
+        "userMessage": "查一下武汉的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather_timeout", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_timeout",
+        "expectedKeywords": ["超时", "稍后", "重试"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "处理超时异常，告知用户稍后重试"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-008",
+      "name": "工具执行超时-多工具部分超时",
+      "description": "多工具调用中部分超时",
+      "input": {
+        "userMessage": "查一下今天的日期和天气",
+        "conversationHistory": [],
+        "availableTools": ["weather_timeout", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getDate",
+        "expectedKeywords": ["日期", "天气", "超时"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "返回成功的日期结果，说明天气查询超时"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-009",
+      "name": "工具返回异常结果-格式错误",
+      "description": "工具返回了格式异常的结果",
+      "input": {
+        "userMessage": "深圳今天天气如何？",
+        "conversationHistory": [],
+        "availableTools": ["weather_malformed", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_malformed",
+        "expectedKeywords": ["天气", "异常", "抱歉"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "处理格式异常的返回结果，给用户友好提示"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-010",
+      "name": "工具返回异常结果-错误码",
+      "description": "工具返回了错误码",
+      "input": {
+        "userMessage": "帮我看看北京天气",
+        "conversationHistory": [],
+        "availableTools": ["weather_error", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_error",
+        "expectedKeywords": ["错误", "异常", "无法"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "处理错误码返回，告知用户服务暂时不可用"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-011",
+      "name": "网络异常-连接失败",
+      "description": "模拟工具因网络问题调用失败",
+      "input": {
+        "userMessage": "查一下今天重庆的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather_network_error", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_network_error",
+        "expectedKeywords": ["网络", "失败", "无法连接"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "处理网络异常，告知用户网络不可用"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-012",
+      "name": "网络异常-DNS解析失败",
+      "description": "模拟DNS解析失败",
+      "input": {
+        "userMessage": "帮我定位当前城市",
+        "conversationHistory": [],
+        "availableTools": ["weather", "getDate", "getCity_dns_error"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "getCity_dns_error",
+        "expectedKeywords": ["无法", "定位", "服务"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "处理DNS解析异常，给出友好错误提示"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-013",
+      "name": "工具调用重试-首次失败重试成功",
+      "description": "首次调用失败后重试成功",
+      "input": {
+        "userMessage": "杭州今天天气怎样？",
+        "conversationHistory": [],
+        "availableTools": ["weather_retry", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_retry",
+        "expectedKeywords": ["杭州", "天气"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "首次失败后自动重试，最终返回天气结果"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-014",
+      "name": "工具调用重试-多次失败后放弃",
+      "description": "多次重试均失败的场景",
+      "input": {
+        "userMessage": "查一下苏州的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather_always_fail", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_always_fail",
+        "expectedKeywords": ["失败", "无法", "稍后"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "多次重试失败后放弃，告知用户服务暂时不可用"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": false,
+        "relevanceCheck": true
+      }
+    },
+    {
+      "id": "TC-TE-015",
+      "name": "工具返回空结果",
+      "description": "工具执行成功但返回空结果",
+      "input": {
+        "userMessage": "查一下南极的天气",
+        "conversationHistory": [],
+        "availableTools": ["weather_empty", "getDate", "getCity"],
+        "knowledgeBase": null
+      },
+      "expected": {
+        "shouldCallTool": true,
+        "expectedToolName": "weather_empty",
+        "expectedKeywords": ["暂无", "数据", "没有", "结果"],
+        "shouldContain": [],
+        "shouldNotContain": [],
+        "expectedBehavior": "处理空结果，告知用户该地区暂无天气数据"
+      },
+      "evaluationCriteria": {
+        "accuracyWeight": 1.0,
+        "hallucinationCheck": true,
+        "relevanceCheck": true
+      }
+    }
+  ]
+}

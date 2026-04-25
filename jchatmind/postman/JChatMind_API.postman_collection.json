@@ -1,0 +1,1231 @@
+{
+	"info": {
+		"_postman_id": "jchatmind-api-collection-v1",
+		"name": "JChatMind API",
+		"description": "JChatMind 项目全部核心 API 端点自动化测试集，覆盖 Health Check、Agent 管理、Chat Sessions、Chat Messages、Knowledge Bases、Documents、Tools、SSE Streaming 及端到端集成流程。",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{ "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+		{ "key": "agentId", "value": "", "type": "string" },
+		{ "key": "chatSessionId", "value": "", "type": "string" },
+		{ "key": "chatMessageId", "value": "", "type": "string" },
+		{ "key": "knowledgeBaseId", "value": "", "type": "string" },
+		{ "key": "documentId", "value": "", "type": "string" },
+		{ "key": "kbId", "value": "", "type": "string" }
+	],
+	"item": [
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "GET /health",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"pm.test('Response body is ok', function () { pm.expect(pm.response.text()).to.eql('ok'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Agent Management",
+			"item": [
+				{
+					"name": "GET /api/agents - List All Agents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has agents array', function () { pm.expect(jsonData.data).to.have.property('agents'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/agents - Create Agent",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test Agent\",\n  \"description\": \"Postman auto-test agent\",\n  \"systemPrompt\": \"You are a helpful assistant.\",\n  \"model\": \"gpt-4\",\n  \"allowedTools\": [],\n  \"allowedKbs\": [],\n  \"chatOptions\": {}\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200 or 201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has agentId', function () { pm.expect(jsonData.data).to.have.property('agentId'); });",
+									"if (jsonData.data && jsonData.data.agentId) { pm.collectionVariables.set('agentId', jsonData.data.agentId); }",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH /api/agents/:agentId - Update Agent",
+					"request": {
+						"method": "PATCH",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Test Agent\",\n  \"description\": \"Updated description via Postman\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "agents", "{{agentId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE /api/agents/:agentId - Delete Agent",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "agents", "{{agentId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Chat Sessions",
+			"item": [
+				{
+					"name": "GET /api/chat-sessions - List All Sessions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/chat-sessions", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has chatSessions array', function () { pm.expect(jsonData.data).to.have.property('chatSessions'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/chat-sessions - Create Session",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"agentId\": \"{{agentId}}\",\n  \"title\": \"Postman Test Session\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/chat-sessions", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200 or 201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has chatSessionId', function () { pm.expect(jsonData.data).to.have.property('chatSessionId'); });",
+									"if (jsonData.data && jsonData.data.chatSessionId) { pm.collectionVariables.set('chatSessionId', jsonData.data.chatSessionId); }",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/chat-sessions/:chatSessionId - Get Session",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/chat-sessions/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions", "{{chatSessionId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has chatSession object', function () { pm.expect(jsonData.data).to.have.property('chatSession'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/chat-sessions/agent/:agentId - Get Sessions by Agent",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/chat-sessions/agent/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions", "agent", "{{agentId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has chatSessions array', function () { pm.expect(jsonData.data).to.have.property('chatSessions'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH /api/chat-sessions/:chatSessionId - Update Session",
+					"request": {
+						"method": "PATCH",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Updated Session Title\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/chat-sessions/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions", "{{chatSessionId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE /api/chat-sessions/:chatSessionId - Delete Session",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/chat-sessions/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions", "{{chatSessionId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Chat Messages",
+			"item": [
+				{
+					"name": "GET /api/chat-messages/session/:sessionId - List Messages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/chat-messages/session/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages", "session", "{{chatSessionId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has chatMessages array', function () { pm.expect(jsonData.data).to.have.property('chatMessages'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/chat-messages - Create Message",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"sessionId\": \"{{chatSessionId}}\",\n  \"role\": \"user\",\n  \"content\": \"Hello, this is a test message from Postman.\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/chat-messages", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200 or 201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has chatMessageId', function () { pm.expect(jsonData.data).to.have.property('chatMessageId'); });",
+									"if (jsonData.data && jsonData.data.chatMessageId) { pm.collectionVariables.set('chatMessageId', jsonData.data.chatMessageId); }",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH /api/chat-messages/:chatMessageId - Update Message",
+					"request": {
+						"method": "PATCH",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"Updated message content via Postman\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/chat-messages/{{chatMessageId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages", "{{chatMessageId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE /api/chat-messages/:chatMessageId - Delete Message",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/chat-messages/{{chatMessageId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages", "{{chatMessageId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Knowledge Bases",
+			"item": [
+				{
+					"name": "GET /api/knowledge-bases - List All KBs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/knowledge-bases", "host": ["{{baseUrl}}"], "path": ["api", "knowledge-bases"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has knowledgeBases array', function () { pm.expect(jsonData.data).to.have.property('knowledgeBases'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/knowledge-bases - Create KB",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Test Knowledge Base\",\n  \"description\": \"Created by Postman auto-test\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/knowledge-bases", "host": ["{{baseUrl}}"], "path": ["api", "knowledge-bases"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200 or 201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has knowledgeBaseId', function () { pm.expect(jsonData.data).to.have.property('knowledgeBaseId'); });",
+									"if (jsonData.data && jsonData.data.knowledgeBaseId) {",
+									"  pm.collectionVariables.set('knowledgeBaseId', jsonData.data.knowledgeBaseId);",
+									"  pm.collectionVariables.set('kbId', jsonData.data.knowledgeBaseId);",
+									"}",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH /api/knowledge-bases/:knowledgeBaseId - Update KB",
+					"request": {
+						"method": "PATCH",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Knowledge Base\",\n  \"description\": \"Updated by Postman\",\n  \"status\": \"active\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/knowledge-bases/{{knowledgeBaseId}}", "host": ["{{baseUrl}}"], "path": ["api", "knowledge-bases", "{{knowledgeBaseId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE /api/knowledge-bases/:knowledgeBaseId - Delete KB",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/knowledge-bases/{{knowledgeBaseId}}", "host": ["{{baseUrl}}"], "path": ["api", "knowledge-bases", "{{knowledgeBaseId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Documents",
+			"item": [
+				{
+					"name": "GET /api/documents - List All Documents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/documents", "host": ["{{baseUrl}}"], "path": ["api", "documents"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has documents array', function () { pm.expect(jsonData.data).to.have.property('documents'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "GET /api/documents/kb/:kbId - List Documents by KB",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/documents/kb/{{kbId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "kb", "{{kbId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has documents array', function () { pm.expect(jsonData.data).to.have.property('documents'); });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/documents - Create Document",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"kbId\": \"{{kbId}}\",\n  \"fileName\": \"test-document.txt\",\n  \"filePath\": \"/uploads/test-document.txt\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/documents", "host": ["{{baseUrl}}"], "path": ["api", "documents"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200 or 201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has documentId', function () { pm.expect(jsonData.data).to.have.property('documentId'); });",
+									"if (jsonData.data && jsonData.data.documentId) { pm.collectionVariables.set('documentId', jsonData.data.documentId); }",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "POST /api/documents/upload - Upload Document",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "file", "type": "file", "src": "" },
+								{ "key": "kbId", "value": "{{kbId}}", "type": "text" }
+							]
+						},
+						"url": { "raw": "{{baseUrl}}/api/documents/upload", "host": ["{{baseUrl}}"], "path": ["api", "documents", "upload"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200 or 201', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data has documentId', function () { pm.expect(jsonData.data).to.have.property('documentId'); });",
+									"if (jsonData.data && jsonData.data.documentId) { pm.collectionVariables.set('documentId', jsonData.data.documentId); }",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "PATCH /api/documents/:documentId - Update Document",
+					"request": {
+						"method": "PATCH",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fileName\": \"updated-document.txt\",\n  \"filePath\": \"/uploads/updated-document.txt\",\n  \"status\": \"active\"\n}"
+						},
+						"url": { "raw": "{{baseUrl}}/api/documents/{{documentId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "{{documentId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "DELETE /api/documents/:documentId - Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/documents/{{documentId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "{{documentId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"var jsonData = pm.response.json();",
+									"pm.test('Response has code field', function () { pm.expect(jsonData).to.have.property('code'); });",
+									"pm.test('Response has data field', function () { pm.expect(jsonData).to.have.property('data'); });",
+									"pm.test('Data is null', function () { pm.expect(jsonData.data).to.be.null; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Tools",
+			"item": [
+				{
+					"name": "GET /api/tools - List All Tools",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": { "raw": "{{baseUrl}}/api/tools", "host": ["{{baseUrl}}"], "path": ["api", "tools"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"pm.test('Response body is not empty', function () { pm.expect(pm.response.text()).to.not.be.empty; });",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "SSE Streaming",
+			"description": "SSE (Server-Sent Events) 流式响应测试方案。\n\n注意：Postman 原生不完全支持 SSE 长连接，以下请求用于验证 SSE 端点可达性。完整 SSE 测试建议结合 Newman + 自定义脚本或使用 curl/httpie 等工具。\n\n## 测试方案\n\n### 场景1: 正常SSE连接和消息接收\n- 目标: 验证 SSE 端点返回 text/event-stream Content-Type，连接建立后可接收 event 数据\n- 步骤: GET /sse/connect/:chatSessionId → 检查 Content-Type: text/event-stream → 触发消息发送 → 验证接收到 data 字段\n- 预期: 连接成功 200，Content-Type 正确，能持续接收 event 流\n\n### 场景2: SSE连接超时后自动重连（客户端30分钟超时）\n- 目标: 验证客户端在 30 分钟超时断开后能自动重连\n- 步骤: 建立 SSE 连接 → 等待 30 分钟空闲 → 客户端检测断开 → 发起新连接 → 验证重连后消息正常\n- 预期: 重连后 sessionId 保持一致，历史消息不丢失，新消息正常推送\n- 工具建议: 使用 EventSource polyfill 配合 reconnect 参数测试\n\n### 场景3: 网络中断后恢复连接\n- 目标: 验证网络异常断开后客户端可恢复 SSE 连接\n- 步骤: 建立 SSE 连接 → 模拟网络中断(断开 Wi-Fi/拔网线) → 恢复网络 → 客户端重新发起 GET /sse/connect/:chatSessionId → 验证消息流恢复\n- 预期: 重连成功，服务端 session 仍有效，断线期间的消息在重连后可通过消息历史 API 补偿\n- 工具建议: 使用 toxiproxy 或 iptables 模拟网络中断\n\n### 场景4: 并发多个SSE连接\n- 目标: 验证服务端能同时维持多个 SSE 连接（不同 session）\n- 步骤: 创建 N 个 chatSession → 并发建立 N 个 SSE 连接 → 分别向各 session 发送消息 → 验证每个连接独立接收自己的消息\n- 预期: 各连接互不干扰，消息路由正确，服务端资源（线程/连接池）无泄漏\n- 工具建议: 使用 k6 或 Artillery 进行并发 SSE 连接压测\n\n### 场景5: 大量消息推送压力测试\n- 目标: 验证 SSE 通道在高频消息推送下的稳定性和延迟\n- 步骤: 建立 SSE 连接 → 在短时间内向 session 发送 1000+ 条消息 → 监控 SSE 接收端消息完整性和顺序 → 记录端到端延迟\n- 预期: 消息不丢失、顺序一致、延迟在可接受范围内（P99 < 500ms）、无内存泄漏\n- 工具建议: 使用 k6 WebSocket/SSE 插件 + Grafana 监控",
+			"item": [
+				{
+					"name": "GET /sse/connect/:chatSessionId - SSE Connect",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "text/event-stream" }],
+						"url": { "raw": "{{baseUrl}}/sse/connect/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["sse", "connect", "{{chatSessionId}}"] }
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// SSE 连接测试 - Postman 会在超时后关闭连接",
+									"pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+									"pm.test('Content-Type is text/event-stream', function () {",
+									"  var ct = pm.response.headers.get('Content-Type');",
+									"  pm.expect(ct).to.include('text/event-stream');",
+									"});",
+									"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[方案] 场景1: 正常SSE连接和消息接收",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "text/event-stream" }],
+						"url": { "raw": "{{baseUrl}}/sse/connect/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["sse", "connect", "{{chatSessionId}}"] },
+						"description": "场景1: 正常SSE连接和消息接收\n\n测试步骤:\n1. 确保 chatSessionId 变量已设置（先运行 Chat Sessions > Create Session）\n2. 发送此请求建立 SSE 连接\n3. 在另一个终端/Postman 中调用 POST /api/chat-messages 向同一 session 发送消息\n4. 观察 SSE 连接是否接收到推送的 event 数据\n\n验证要点:\n- HTTP 200\n- Content-Type: text/event-stream\n- 接收到的 event 包含 data 字段\n- data 可以被 JSON.parse 解析\n\n命令行验证:\ncurl -N -H 'Accept: text/event-stream' http://localhost:8080/sse/connect/{chatSessionId}"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('SSE endpoint reachable - Status 200', function () { pm.response.to.have.status(200); });",
+									"pm.test('Content-Type is event-stream', function () {",
+									"  pm.expect(pm.response.headers.get('Content-Type')).to.include('text/event-stream');",
+									"});"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[方案] 场景2: SSE连接超时后自动重连",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "text/event-stream" }],
+						"url": { "raw": "{{baseUrl}}/sse/connect/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["sse", "connect", "{{chatSessionId}}"] },
+						"description": "场景2: SSE连接超时后自动重连（客户端30分钟超时）\n\n此场景无法仅通过 Postman 完成，需配合前端或脚本测试。\n\n推荐测试方式 (Node.js):\n```js\nconst EventSource = require('eventsource');\nlet reconnectCount = 0;\nfunction connect() {\n  const es = new EventSource('http://localhost:8080/sse/connect/' + chatSessionId);\n  es.onopen = () => console.log(`Connected (reconnect #${reconnectCount})`);\n  es.onmessage = (e) => console.log('Message:', e.data);\n  es.onerror = () => {\n    reconnectCount++;\n    console.log('Disconnected, will auto-reconnect...');\n    es.close();\n    setTimeout(connect, 3000);\n  };\n}\nconnect();\n```\n\n验证要点:\n- 30分钟超时后连接断开\n- 客户端自动重连成功\n- 重连后 chatSessionId 一致\n- 新消息推送正常"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('SSE endpoint reachable for reconnect test', function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[方案] 场景3: 网络中断后恢复连接",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "text/event-stream" }],
+						"url": { "raw": "{{baseUrl}}/sse/connect/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["sse", "connect", "{{chatSessionId}}"] },
+						"description": "场景3: 网络中断后恢复连接\n\n此场景需要使用网络模拟工具：\n\n方案A - toxiproxy:\n```bash\n# 创建代理\ntoxiproxy-cli create jchatmind -l 0.0.0.0:18080 -u localhost:8080\n# 建立 SSE 连接 (通过 proxy)\ncurl -N http://localhost:18080/sse/connect/{chatSessionId}\n# 模拟网络中断\ntoxiproxy-cli toxic add jchatmind -t timeout -a timeout=0\n# 恢复网络\ntoxiproxy-cli toxic remove jchatmind -n timeout_downstream\n```\n\n方案B - iptables (Linux):\n```bash\n# 模拟中断\niptables -A OUTPUT -p tcp --dport 8080 -j DROP\n# 恢复\niptables -D OUTPUT -p tcp --dport 8080 -j DROP\n```\n\n验证要点:\n- 中断后客户端检测到连接断开\n- 恢复后重新建立 SSE 连接成功\n- 通过 GET /api/chat-messages/session/:sessionId 补偿断线期间消息"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('SSE endpoint reachable for network recovery test', function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[方案] 场景4: 并发多个SSE连接",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "text/event-stream" }],
+						"url": { "raw": "{{baseUrl}}/sse/connect/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["sse", "connect", "{{chatSessionId}}"] },
+						"description": "场景4: 并发多个SSE连接\n\n推荐使用 k6 进行并发 SSE 压测:\n```js\nimport http from 'k6/http';\nimport { check } from 'k6';\n\nexport const options = {\n  scenarios: {\n    sse_concurrent: {\n      executor: 'per-vu-iterations',\n      vus: 50,\n      iterations: 1,\n      maxDuration: '2m',\n    },\n  },\n};\n\nexport default function () {\n  // 每个 VU 先创建自己的 session\n  const sessionRes = http.post('http://localhost:8080/api/chat-sessions', \n    JSON.stringify({ agentId: 'test-agent', title: `k6-session-${__VU}` }),\n    { headers: { 'Content-Type': 'application/json' } });\n  const sessionId = sessionRes.json('data.chatSessionId');\n  \n  // 建立 SSE 连接\n  const res = http.get(`http://localhost:8080/sse/connect/${sessionId}`,\n    { headers: { 'Accept': 'text/event-stream' }, timeout: '60s' });\n  check(res, {\n    'SSE status 200': (r) => r.status === 200,\n    'Content-Type correct': (r) => r.headers['Content-Type'].includes('text/event-stream'),\n  });\n}\n```\n\n验证要点:\n- 50个并发 SSE 连接全部成功建立\n- 各连接消息路由正确，互不干扰\n- 服务端线程池/连接池无泄漏"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('SSE endpoint reachable for concurrency test', function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "[方案] 场景5: 大量消息推送压力测试",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Accept", "value": "text/event-stream" }],
+						"url": { "raw": "{{baseUrl}}/sse/connect/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["sse", "connect", "{{chatSessionId}}"] },
+						"description": "场景5: 大量消息推送压力测试\n\n推荐使用 k6 + Grafana 进行压力测试:\n```js\nimport http from 'k6/http';\nimport { check, sleep } from 'k6';\nimport { Trend } from 'k6/metrics';\n\nconst msgLatency = new Trend('message_latency');\n\nexport const options = {\n  scenarios: {\n    message_flood: {\n      executor: 'constant-arrival-rate',\n      rate: 100,\n      timeUnit: '1s',\n      duration: '30s',\n      preAllocatedVUs: 50,\n    },\n  },\n};\n\nexport default function () {\n  const start = Date.now();\n  const res = http.post('http://localhost:8080/api/chat-messages',\n    JSON.stringify({\n      sessionId: 'stress-test-session',\n      role: 'user',\n      content: `Stress test message ${Date.now()}`\n    }),\n    { headers: { 'Content-Type': 'application/json' } });\n  msgLatency.add(Date.now() - start);\n  check(res, { 'message sent': (r) => r.status === 200 || r.status === 201 });\n}\n```\n\nSSE 接收端监控 (Node.js):\n```js\nconst EventSource = require('eventsource');\nlet received = 0, outOfOrder = 0, lastTimestamp = 0;\nconst es = new EventSource('http://localhost:8080/sse/connect/stress-test-session');\nes.onmessage = (e) => {\n  received++;\n  const data = JSON.parse(e.data);\n  if (data.timestamp < lastTimestamp) outOfOrder++;\n  lastTimestamp = data.timestamp;\n  if (received % 100 === 0) console.log(`Received: ${received}, OutOfOrder: ${outOfOrder}`);\n};\n```\n\n验证要点:\n- 1000+ 条消息无丢失\n- 消息顺序一致\n- P99 延迟 < 500ms\n- 服务端无内存泄漏（通过 JVM 监控 heap 使用）"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('SSE endpoint reachable for stress test', function () { pm.response.to.have.status(200); });"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Integration Flows",
+			"item": [
+				{
+					"name": "Flow 1: Agent → Session → Message",
+					"item": [
+						{
+							"name": "Step 1 - Create Agent",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"E2E Flow1 Agent\",\n  \"description\": \"Agent for E2E integration test flow 1\",\n  \"systemPrompt\": \"You are a test assistant for integration testing.\",\n  \"model\": \"gpt-4\",\n  \"allowedTools\": [],\n  \"allowedKbs\": [],\n  \"chatOptions\": {}\n}"
+								},
+								"url": { "raw": "{{baseUrl}}/api/agents", "host": ["{{baseUrl}}"], "path": ["api", "agents"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step1: Agent created', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has agentId', function () { pm.expect(jsonData.data).to.have.property('agentId'); });",
+											"if (jsonData.data && jsonData.data.agentId) { pm.collectionVariables.set('agentId', jsonData.data.agentId); }",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 2 - Create Chat Session",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"agentId\": \"{{agentId}}\",\n  \"title\": \"E2E Flow1 Session\"\n}"
+								},
+								"url": { "raw": "{{baseUrl}}/api/chat-sessions", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step2: Session created', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has chatSessionId', function () { pm.expect(jsonData.data).to.have.property('chatSessionId'); });",
+											"if (jsonData.data && jsonData.data.chatSessionId) { pm.collectionVariables.set('chatSessionId', jsonData.data.chatSessionId); }",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 3 - Send Chat Message",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"sessionId\": \"{{chatSessionId}}\",\n  \"role\": \"user\",\n  \"content\": \"E2E Flow1: Hello Agent, this is an integration test message.\"\n}"
+								},
+								"url": { "raw": "{{baseUrl}}/api/chat-messages", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step3: Message sent', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has chatMessageId', function () { pm.expect(jsonData.data).to.have.property('chatMessageId'); });",
+											"if (jsonData.data && jsonData.data.chatMessageId) { pm.collectionVariables.set('chatMessageId', jsonData.data.chatMessageId); }",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 4 - Verify Messages in Session",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/chat-messages/session/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages", "session", "{{chatSessionId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step4: Messages retrieved', function () { pm.response.to.have.status(200); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has code', function () { pm.expect(jsonData).to.have.property('code'); });",
+											"pm.test('Data has chatMessages', function () { pm.expect(jsonData.data).to.have.property('chatMessages'); });",
+											"pm.test('At least one message exists', function () { pm.expect(jsonData.data.chatMessages.length).to.be.greaterThan(0); });",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 5 - Verify Session belongs to Agent",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/chat-sessions/agent/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions", "agent", "{{agentId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step5: Agent sessions retrieved', function () { pm.response.to.have.status(200); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Data has chatSessions', function () { pm.expect(jsonData.data).to.have.property('chatSessions'); });",
+											"pm.test('At least one session for this agent', function () { pm.expect(jsonData.data.chatSessions.length).to.be.greaterThan(0); });",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 6 - Cleanup: Delete Message",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/chat-messages/{{chatMessageId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-messages", "{{chatMessageId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Cleanup: Message deleted', function () { pm.response.to.have.status(200); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 7 - Cleanup: Delete Session",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/chat-sessions/{{chatSessionId}}", "host": ["{{baseUrl}}"], "path": ["api", "chat-sessions", "{{chatSessionId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Cleanup: Session deleted', function () { pm.response.to.have.status(200); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 8 - Cleanup: Delete Agent",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/agents/{{agentId}}", "host": ["{{baseUrl}}"], "path": ["api", "agents", "{{agentId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Cleanup: Agent deleted', function () { pm.response.to.have.status(200); });"
+										]
+									}
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Flow 2: Knowledge Base → Document",
+					"item": [
+						{
+							"name": "Step 1 - Create Knowledge Base",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"E2E Flow2 Knowledge Base\",\n  \"description\": \"KB for E2E integration test flow 2\"\n}"
+								},
+								"url": { "raw": "{{baseUrl}}/api/knowledge-bases", "host": ["{{baseUrl}}"], "path": ["api", "knowledge-bases"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step1: KB created', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has knowledgeBaseId', function () { pm.expect(jsonData.data).to.have.property('knowledgeBaseId'); });",
+											"if (jsonData.data && jsonData.data.knowledgeBaseId) {",
+											"  pm.collectionVariables.set('knowledgeBaseId', jsonData.data.knowledgeBaseId);",
+											"  pm.collectionVariables.set('kbId', jsonData.data.knowledgeBaseId);",
+											"}",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 2 - Create Document (JSON)",
+							"request": {
+								"method": "POST",
+								"header": [{ "key": "Content-Type", "value": "application/json" }],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"kbId\": \"{{kbId}}\",\n  \"fileName\": \"e2e-test-document.txt\",\n  \"filePath\": \"/uploads/e2e-test-document.txt\"\n}"
+								},
+								"url": { "raw": "{{baseUrl}}/api/documents", "host": ["{{baseUrl}}"], "path": ["api", "documents"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step2: Document created', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has documentId', function () { pm.expect(jsonData.data).to.have.property('documentId'); });",
+											"if (jsonData.data && jsonData.data.documentId) { pm.collectionVariables.set('documentId', jsonData.data.documentId); }",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 3 - Verify Documents in KB",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/documents/kb/{{kbId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "kb", "{{kbId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step3: Documents listed', function () { pm.response.to.have.status(200); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Data has documents', function () { pm.expect(jsonData.data).to.have.property('documents'); });",
+											"pm.test('At least one document in KB', function () { pm.expect(jsonData.data.documents.length).to.be.greaterThan(0); });",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 4 - Upload Document (Multipart)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{ "key": "file", "type": "file", "src": "", "description": "选择要上传的文件" },
+										{ "key": "kbId", "value": "{{kbId}}", "type": "text" }
+									]
+								},
+								"url": { "raw": "{{baseUrl}}/api/documents/upload", "host": ["{{baseUrl}}"], "path": ["api", "documents", "upload"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step4: Document uploaded', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Response has documentId', function () { pm.expect(jsonData.data).to.have.property('documentId'); });",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 5 - Verify All Documents",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/documents/kb/{{kbId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "kb", "{{kbId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Step5: All documents verified', function () { pm.response.to.have.status(200); });",
+											"var jsonData = pm.response.json();",
+											"pm.test('Multiple documents in KB', function () { pm.expect(jsonData.data.documents.length).to.be.greaterThan(1); });",
+											"pm.test('Response time < 2000ms', function () { pm.expect(pm.response.responseTime).to.be.below(2000); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 6 - Cleanup: Delete Document",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/documents/{{documentId}}", "host": ["{{baseUrl}}"], "path": ["api", "documents", "{{documentId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Cleanup: Document deleted', function () { pm.response.to.have.status(200); });"
+										]
+									}
+								}
+							]
+						},
+						{
+							"name": "Step 7 - Cleanup: Delete Knowledge Base",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": { "raw": "{{baseUrl}}/api/knowledge-bases/{{knowledgeBaseId}}", "host": ["{{baseUrl}}"], "path": ["api", "knowledge-bases", "{{knowledgeBaseId}}"] }
+							},
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"type": "text/javascript",
+										"exec": [
+											"pm.test('Cleanup: KB deleted', function () { pm.response.to.have.status(200); });"
+										]
+									}
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}
